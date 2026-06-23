@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tekanan Hidrostatis — P = ρgh</title>
+<style>
+  :root{
+    --paper:#F6F3EC;
+    --ink:#13314A;
+    --ink-soft:#3E5E78;
+    --line:#C7CDB8;
+    --water-deep:#0E3A5C;
+    --water-light:#5FA8C9;
+    --amber:#E18B2E;
+    --amber-soft:#F6D9AF;
+    --white:#FDFCF8;
+    --danger:#B5482F;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 36px 36px;
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:'IBM Plex Sans', Arial, sans-serif;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  @font-face{font-family:'IBM Plex Sans';src:local('Arial');}
+
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px;}
+
+  /* HERO */
+  header.hero{
+    border:2px solid var(--ink);
+    border-radius:var(--radius);
+    background:var(--white);
+    padding:36px 32px;
+    position:relative;
+    overflow:hidden;
+    margin-bottom:28px;
+  }
+  header.hero::before{
+    content:"";
+    position:absolute;
+    top:0; right:0; bottom:0;
+    width:6px;
+    background:repeating-linear-gradient(
+      to bottom, var(--amber) 0 10px, transparent 10px 20px
+    );
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--amber);
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  h1{
+    font-size:clamp(28px,5vw,44px);
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+    font-weight:700;
+  }
+  .subtitle{color:var(--ink-soft); font-size:16px; margin:0 0 22px; max-width:560px;}
+  .formula-card{
+    display:flex; align-items:center; gap:22px; flex-wrap:wrap;
+    border-top:1px dashed var(--ink-soft);
+    padding-top:20px;
+  }
+  .formula-big{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(30px,6vw,46px);
+    font-weight:700;
+    color:var(--water-deep);
+    white-space:nowrap;
+  }
+  .formula-big sub{font-size:.55em;}
+  .legend{
+    display:flex; gap:18px; flex-wrap:wrap; font-family:'IBM Plex Mono',monospace; font-size:13px;
+  }
+  .legend span b{color:var(--ink); font-weight:700;}
+  .legend span{color:var(--ink-soft);}
+
+  /* MAIN GRID */
+  .lab{
+    display:grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap:24px;
+    align-items:start;
+  }
+  @media (max-width:840px){
+    .lab{grid-template-columns:1fr;}
+  }
+
+  .panel{
+    background:var(--white);
+    border:2px solid var(--ink);
+    border-radius:var(--radius);
+    padding:24px;
+  }
+  .panel h2{
+    margin:0 0 4px;
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--ink-soft);
+  }
+
+  /* TANK VISUAL */
+  .tank-panel{display:flex; flex-direction:column; gap:14px;}
+  .tank-svg-wrap{
+    display:flex; justify-content:center; padding:6px 0 0;
+  }
+  svg{max-width:100%; height:auto; display:block;}
+
+  .readout-row{
+    display:flex; gap:14px; flex-wrap:wrap; margin-top:6px;
+  }
+  .readout{
+    flex:1; min-width:140px;
+    background:var(--paper);
+    border:1.5px solid var(--ink);
+    border-radius:10px;
+    padding:12px 14px;
+  }
+  .readout .label{font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace;}
+  .readout .value{font-family:'IBM Plex Mono', monospace; font-size:24px; font-weight:700; color:var(--water-deep); margin-top:2px;}
+  .readout.highlight{background:var(--amber-soft); border-color:var(--amber);}
+  .readout.highlight .value{color:var(--danger);}
+
+  /* CONTROLS */
+  .control-block{margin-bottom:24px;}
+  .control-block:last-child{margin-bottom:0;}
+  .control-head{
+    display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;
+  }
+  .control-head label{font-weight:700; font-size:15px;}
+  .control-head .live{
+    font-family:'IBM Plex Mono', monospace; font-weight:700; color:var(--water-deep); font-size:15px;
+  }
+  input[type="range"]{
+    width:100%;
+    -webkit-appearance:none;
+    height:6px;
+    background:var(--line);
+    border-radius:4px;
+    outline:none;
+    margin:4px 0 6px;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:20px; height:20px; border-radius:50%;
+    background:var(--amber);
+    border:3px solid var(--ink);
+    cursor:pointer;
+    margin-top:-2px;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:20px; height:20px; border-radius:50%;
+    background:var(--amber); border:3px solid var(--ink); cursor:pointer;
+  }
+  .range-ticks{
+    display:flex; justify-content:space-between;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft);
+  }
+  .presets{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  .preset-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    border:1.5px solid var(--ink);
+    background:var(--white);
+    border-radius:20px;
+    padding:6px 12px;
+    cursor:pointer;
+    transition:.15s;
+  }
+  .preset-btn:hover{background:var(--amber-soft); border-color:var(--amber);}
+  .preset-btn.active{background:var(--ink); color:var(--white);}
+
+  /* EXPLANATION */
+  .explain{
+    margin-top:28px;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:18px;
+  }
+  @media (max-width:840px){.explain{grid-template-columns:1fr;}}
+  .explain .card{
+    background:var(--white);
+    border:1.5px solid var(--ink);
+    border-radius:var(--radius);
+    padding:20px;
+  }
+  .explain .card .tag{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    background:var(--ink);
+    color:var(--white);
+    padding:3px 8px;
+    border-radius:6px;
+    margin-bottom:10px;
+  }
+  .explain .card h3{margin:0 0 8px; font-size:17px;}
+  .explain .card p{margin:0; font-size:14px; color:var(--ink-soft);}
+
+  footer.note{
+    margin-top:24px;
+    font-size:13px;
+    color:var(--ink-soft);
+    border-top:1px dashed var(--line);
+    padding-top:16px;
+  }
+  footer.note b{color:var(--ink);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">Mekanika Fluida — Teknik Sipil</div>
+    <h1>Tekanan Hidrostatis</h1>
+    <p class="subtitle">Geser slider kedalaman dan densitas fluida untuk melihat bagaimana tekanan pada suatu titik di dalam fluida berubah secara real‑time.</p>
+    <div class="formula-card">
+      <div class="formula-big">P = ρ · g · h</div>
+      <div class="legend">
+        <span><b>P</b> tekanan (Pa)</span>
+        <span><b>ρ</b> densitas fluida (kg/m³)</span>
+        <span><b>g</b> gravitasi = 9.81 m/s²</span>
+        <span><b>h</b> kedalaman (m)</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="lab">
+
+    <!-- VISUALIZATION -->
+    <div class="panel tank-panel">
+      <h2>Visualisasi Tangki</h2>
+      <div class="tank-svg-wrap">
+        <svg id="tankSvg" viewBox="0 0 320 380" width="320" height="380">
+          <!-- tank outline -->
+          <rect x="40" y="20" width="200" height="320" fill="none" stroke="#13314A" stroke-width="3" rx="4"/>
+          <!-- depth ruler ticks -->
+          <g id="rulerTicks" font-family="IBM Plex Mono, monospace" font-size="10" fill="#3E5E78"></g>
+          <!-- water body -->
+          <rect id="waterRect" x="43" y="320" width="194" height="0" fill="#5FA8C9"/>
+          <!-- water surface line -->
+          <line id="surfaceLine" x1="40" y1="320" x2="240" y2="320" stroke="#0E3A5C" stroke-width="2"/>
+          <!-- depth indicator dashed line (point of measurement) -->
+          <line id="depthLine" x1="40" y1="300" x2="270" y2="300" stroke="#B5482F" stroke-width="2" stroke-dasharray="6 5"/>
+          <circle id="depthDot" cx="140" cy="300" r="5" fill="#B5482F" stroke="#13314A" stroke-width="1.5"/>
+          <!-- pressure label -->
+          <g id="pressureLabel" font-family="IBM Plex Mono, monospace">
+            <rect x="248" y="288" width="0" height="24" fill="#F6D9AF" stroke="#13314A" stroke-width="1.5" rx="4" id="pLabelBg"/>
+            <text x="254" y="304" font-size="12" font-weight="700" fill="#B5482F" id="pLabelText"></text>
+          </g>
+          <!-- tank base shading -->
+          <rect x="40" y="338" width="200" height="2" fill="#13314A"/>
+        </svg>
+      </div>
+
+      <div class="readout-row">
+        <div class="readout">
+          <div class="label">Kedalaman h</div>
+          <div class="value" id="readH">3.0 m</div>
+        </div>
+        <div class="readout">
+          <div class="label">Densitas ρ</div>
+          <div class="value" id="readRho">1000 kg/m³</div>
+        </div>
+        <div class="readout highlight">
+          <div class="label">Tekanan P</div>
+          <div class="value" id="readP">29.43 kPa</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="panel">
+      <h2>Parameter Eksperimen</h2>
+
+      <div class="control-block">
+        <div class="control-head">
+          <label for="depthSlider">Kedalaman (h)</label>
+          <span class="live" id="depthLive">3.0 m</span>
+        </div>
+        <input type="range" id="depthSlider" min="0" max="10" step="0.1" value="3">
+        <div class="range-ticks"><span>0 m</span><span>5 m</span><span>10 m</span></div>
+      </div>
+
+      <div class="control-block">
+        <div class="control-head">
+          <label for="rhoSlider">Densitas Fluida (ρ)</label>
+          <span class="live" id="rhoLive">1000 kg/m³</span>
+        </div>
+        <input type="range" id="rhoSlider" min="800" max="1500" step="5" value="1000">
+        <div class="range-ticks"><span>800</span><span>1150</span><span>1500</span></div>
+        <div class="presets">
+          <button class="preset-btn" data-rho="1000">Air tawar (1000)</button>
+          <button class="preset-btn" data-rho="1025">Air laut (1025)</button>
+          <button class="preset-btn" data-rho="1300">Lumpur bor (1300)</button>
+          <button class="preset-btn" data-rho="850">Minyak (850)</button>
+        </div>
+      </div>
+
+      <div class="control-block">
+        <div class="control-head">
+          <label>Hasil Perhitungan</label>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:14px; background:var(--paper); border:1.5px dashed var(--ink-soft); border-radius:10px; padding:14px;">
+          P = ρ × g × h<br>
+          P = <span id="calcRho">1000</span> × 9.81 × <span id="calcH">3.0</span><br>
+          <strong>P = <span id="calcP">29430</span> Pa = <span id="calcPkpa">29.43</span> kPa</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPLANATION -->
+  <div class="explain">
+    <div class="card">
+      <span class="tag">VARIABEL h</span>
+      <h3>Pengaruh kedalaman</h3>
+      <p>Tekanan hidrostatis berbanding lurus dengan kedalaman. Semakin dalam suatu titik dari permukaan fluida, semakin besar berat kolom fluida di atasnya, sehingga tekanan meningkat secara linear.</p>
+    </div>
+    <div class="card">
+      <span class="tag">VARIABEL ρ</span>
+      <h3>Pengaruh densitas</h3>
+      <p>Fluida yang lebih padat (misalnya lumpur pengeboran dibanding air tawar) menghasilkan tekanan lebih besar pada kedalaman yang sama, karena massa per satuan volumenya lebih besar.</p>
+    </div>
+    <div class="card">
+      <span class="tag">APLIKASI SIPIL</span>
+      <h3>Mengapa ini penting</h3>
+      <p>Konsep ini menjadi dasar desain dinding penahan air, bendungan, tanggul, dan struktur bawah tanah, di mana gaya dorong fluida terhadap dinding harus diperhitungkan agar struktur aman.</p>
+    </div>
+  </div>
+
+  <footer class="note">
+    <b>Catatan:</b> Tekanan yang dihitung di atas adalah tekanan hidrostatis relatif (gauge pressure), tidak termasuk tekanan atmosfer. Nilai g dianggap konstan 9.81 m/s².
+  </footer>
+
+</div>
+
+<script>
+const g = 9.81;
+const TANK_TOP = 20, TANK_BOTTOM = 340, TANK_HEIGHT_PX = TANK_BOTTOM - TANK_TOP;
+const MAX_DEPTH = 10; // meters, full tank height represents this
+
+const depthSlider = document.getElementById('depthSlider');
+const rhoSlider = document.getElementById('rhoSlider');
+
+const waterRect = document.getElementById('waterRect');
+const surfaceLine = document.getElementById('surfaceLine');
+const depthLine = document.getElementById('depthLine');
+const depthDot = document.getElementById('depthDot');
+const pLabelBg = document.getElementById('pLabelBg');
+const pLabelText = document.getElementById('pLabelText');
+const rulerTicks = document.getElementById('rulerTicks');
+
+function buildRuler(){
+  rulerTicks.innerHTML = '';
+  for(let m=0; m<=MAX_DEPTH; m+=2){
+    const y = TANK_TOP + (m/MAX_DEPTH)*TANK_HEIGHT_PX;
+    const tick = document.createElementNS('http://www.w3.org/2000/svg','line');
+    tick.setAttribute('x1', 30); tick.setAttribute('x2', 40);
+    tick.setAttribute('y1', y); tick.setAttribute('y2', y);
+    tick.setAttribute('stroke', '#3E5E78'); tick.setAttribute('stroke-width','1.5');
+    rulerTicks.appendChild(tick);
+
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('x', 8); label.setAttribute('y', y+3);
+    label.textContent = m + 'm';
+    rulerTicks.appendChild(label);
+  }
+}
+buildRuler();
+
+function rhoToColor(rho){
+  // interpolate between light blue (low density) and deep navy (high density)
+  const t = (rho - 800) / (1500 - 800);
+  const c1 = [95,168,201];   // light water
+  const c2 = [14,58,92];     // deep dense fluid
+  const r = Math.round(c1[0] + (c2[0]-c1[0])*t);
+  const gg = Math.round(c1[1] + (c2[1]-c1[1])*t);
+  const b = Math.round(c1[2] + (c2[2]-c1[2])*t);
+  return `rgb(${r},${gg},${b})`;
+}
+
+function update(){
+  const h = parseFloat(depthSlider.value);
+  const rho = parseFloat(rhoSlider.value);
+  const P = rho * g * h; // Pa
+  const Pkpa = P / 1000;
+
+  // update text readouts
+  document.getElementById('depthLive').textContent = h.toFixed(1) + ' m';
+  document.getElementById('rhoLive').textContent = rho + ' kg/m³';
+  document.getElementById('readH').textContent = h.toFixed(1) + ' m';
+  document.getElementById('readRho').textContent = rho + ' kg/m³';
+  document.getElementById('readP').textContent = Pkpa.toFixed(2) + ' kPa';
+
+  document.getElementById('calcRho').textContent = rho;
+  document.getElementById('calcH').textContent = h.toFixed(1);
+  document.getElementById('calcP').textContent = Math.round(P);
+  document.getElementById('calcPkpa').textContent = Pkpa.toFixed(2);
+
+  // tank visualization: water fills from a fixed surface at top of tank down to bottom
+  // we represent water level as full tank (since fluid fills whole tank); the depth marker
+  // shows the measurement point at depth h from surface.
+  const waterTopY = TANK_TOP; // surface always at top of tank (h measured from this surface)
+  waterRect.setAttribute('y', waterTopY);
+  waterRect.setAttribute('height', TANK_BOTTOM - waterTopY);
+  waterRect.setAttribute('fill', rhoToColor(rho));
+  surfaceLine.setAttribute('y1', waterTopY);
+  surfaceLine.setAttribute('y2', waterTopY);
+
+  // depth indicator line position (clamped within tank)
+  const depthRatio = Math.min(h / MAX_DEPTH, 1);
+  const depthY = TANK_TOP + depthRatio * TANK_HEIGHT_PX;
+  depthLine.setAttribute('y1', depthY);
+  depthLine.setAttribute('y2', depthY);
+  depthDot.setAttribute('cy', depthY);
+
+  // pressure label box follows the depth line
+  const labelY = Math.max(TANK_TOP+10, Math.min(depthY, TANK_BOTTOM-10));
+  pLabelBg.setAttribute('y', labelY - 12);
+  pLabelBg.setAttribute('height', 24);
+  const labelStr = Pkpa.toFixed(1) + ' kPa';
+  pLabelText.setAttribute('y', labelY + 4);
+  pLabelText.textContent = labelStr;
+  pLabelBg.setAttribute('width', 18 + labelStr.length * 7);
+
+  // preset button active state
+  document.querySelectorAll('.preset-btn').forEach(btn=>{
+    btn.classList.toggle('active', parseFloat(btn.dataset.rho) === rho);
+  });
+}
+
+depthSlider.addEventListener('input', update);
+rhoSlider.addEventListener('input', update);
+
+document.querySelectorAll('.preset-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    rhoSlider.value = btn.dataset.rho;
+    update();
+  });
+});
+
+update();
+</script>
+
+</body>
+</html>
